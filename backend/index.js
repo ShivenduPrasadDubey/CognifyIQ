@@ -6,7 +6,10 @@ const cors = require('cors');
 require('dotenv').config();
 const UserGameScore = require('./models/UserGameScore');
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://cognify-iq.vercel.app', 'http://localhost:3000']
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
