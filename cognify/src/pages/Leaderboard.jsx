@@ -26,7 +26,7 @@ const Leaderboard = () => {
     <h2 className="leaderboard-title text-md md:text-3xl text-orange-50 text-center mb-6">
       Leaderboard - Top 10 Global
     </h2>
-    <div className="tabs flex justify-center mb-6">
+    <div className="tabs gap-2 flex justify-center mb-6">
       {gameTypes.map((type) => (
         <button
           key={type}

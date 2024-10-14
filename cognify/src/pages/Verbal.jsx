@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios'; // Import axios for HTTP requests
 import { useAuth0 } from "@auth0/auth0-react"; // Import Auth0 hook
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
 // Static list of 100 words
 const WORDS_LIST = [
@@ -28,9 +32,11 @@ const VerbalMemoryGame = () => {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(false);
-  const [isSameWord, setIsSameWord] = useState(false); // Track if the same word is shown
-  const [animationClass, setAnimationClass] = useState(''); // Class for animation
+  const [isSameWord, setIsSameWord] = useState(false);
+  const [animationClass, setAnimationClass] = useState('');
   const { user } = useAuth0(); // Get the current user from Auth0
+  const [scores, setScores] = useState([]);
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
   // Function to get the next word, ensuring repetition every 5 words
   const getNextWord = () => {
@@ -69,6 +75,37 @@ const VerbalMemoryGame = () => {
     }
   }, [hasGameStarted]);
 
+  useEffect(() => {
+    const fetchScores = async () => {
+      try {
+        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/VerbalMemory`);
+        setScores(response.data);
+        updateChartData(response.data);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    };
+    fetchScores();
+  }, []);
+
+  const updateChartData = (data) => {
+    const labels = data.map((score, index) => `Score ${index + 1}`);
+    const scoreValues = data.map(score => score.score);
+
+    setChartData({
+      labels,
+      datasets: [
+        {
+          label: 'Verbal Memory Scores',
+          data: scoreValues,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderWidth: 2,
+        },
+      ],
+    });
+  };
+
   const handleSeen = () => {
     if (seenWords.has(currentWord)) {
       setScore(score + 1);
@@ -92,13 +129,15 @@ const VerbalMemoryGame = () => {
 
   const saveScore = async (finalScore) => {
     if(user) {
-
       try {
-        await axios.post('https://cognifyiq.onrender.com//api/score', {
+        await axios.post('https://cognifyiq.onrender.com/api/score', {
           userName: user.nickname, // Save user's nickname
           gameType: 'VerbalMemory', // Specify game type
           score: finalScore, // Save the final score
         });
+        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/VerbalMemory`);
+        setScores(response.data);
+        updateChartData(response.data);
         console.log('Score saved successfully');
       } catch (error) {
         console.error('Error saving score:', error);
@@ -155,6 +194,12 @@ const VerbalMemoryGame = () => {
             </button>
           </div>
         )}
+
+        {/* Chart Section */}
+        <div className="space-y-10 h-52 w-8/12 flex justify-center mx-auto flex-col mt-10">
+          <h3 className="text-center text-sm md:text-lg font-semibold text-[#f0a45d]">Verbal Memory Score Statistics</h3>
+          <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+        </div>
       </div>
   );
 };
