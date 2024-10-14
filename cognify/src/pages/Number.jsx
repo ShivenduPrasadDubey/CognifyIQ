@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth0 } from "@auth0/auth0-react";
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
 const NumberMemoryGame = () => {
   const [level, setLevel] = useState(1);
@@ -14,6 +18,10 @@ const NumberMemoryGame = () => {
   
   const inputRef = useRef(null); // Ref for the input field
   const { user } = useAuth0(); // Get the current user from Auth0
+
+  // Chart Data State
+  const [scores, setScores] = useState([]);
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
   const generateNumber = (level) => Math.floor(Math.random() * (10 ** level - 10 ** (level - 1))) + 10 ** (level - 1);
 
@@ -42,11 +50,42 @@ const NumberMemoryGame = () => {
   }, [level, gameOver, hasGameStarted]);
 
   useEffect(() => {
-    // Automatically focus on the input field when the number disappears and the input field appears
     if (timeLeft === 0 && inputRef.current) {
       inputRef.current.focus();
     }
   }, [timeLeft]);
+
+  // Fetch leaderboard scores for Number Memory Game
+  useEffect(() => {
+    const fetchScores = async () => {
+      try {
+        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/NumberMemory`);
+        setScores(response.data);
+        updateChartData(response.data);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    };
+    fetchScores();
+  }, []);
+
+  const updateChartData = (data) => {
+    const labels = data.map((score, index) => `Score ${index + 1}`);
+    const scoreValues = data.map(score => score.score);
+
+    setChartData({
+      labels,
+      datasets: [
+        {
+          label: 'Number Memory Scores',
+          data: scoreValues,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderWidth: 2,
+        },
+      ],
+    });
+  };
 
   const handleSubmit = () => {
     if (inputValue === currentNumber) {
@@ -79,7 +118,7 @@ const NumberMemoryGame = () => {
       try {
         await axios.post('https://cognifyiq.onrender.com/api/score', {
           userName: user.nickname, // Save user's nickname
-          gameType: 'NumberMemory', // Change game type accordingly
+          gameType: 'NumberMemory', // Save game type
           score: finalScore, // Save the final score
         });
         console.log('Score saved successfully');
@@ -139,6 +178,12 @@ const NumberMemoryGame = () => {
             )}
           </div>
         )}
+
+        {/* Chart Section */}
+        <div className="space-y-10 h-52 w-8/12 flex justify-center mx-auto flex-col mt-10">
+          <h3 className="text-center text-sm md:text-lg font-semibold text-[#f0a45d]">Number Memory Score Statistics</h3>
+          <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+        </div>
       </div>
   );
 };
