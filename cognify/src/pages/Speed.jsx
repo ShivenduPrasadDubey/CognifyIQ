@@ -21,7 +21,7 @@ const Speed = () => {
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/leaderboard/Speed`); // Change endpoint to fetch scores
+        const response = await axios.get(`https://cognifyiq.onrender.com/leaderboard/Speed`); // Change endpoint to fetch scores
         setScores(response.data);
         updateChartData(response.data);
       } catch (error) {
@@ -92,14 +92,14 @@ const Speed = () => {
   const saveScore = async (reactionDuration) => {
     if (user) {
       try {
-        await axios.post('http://localhost:3000/api/score', {
+        await axios.post('https://cognifyiq.onrender.com/score', {
           userName: user.nickname,
           gameType: 'Speed',
           score: reactionDuration,
         });
         console.log('Score saved successfully');
         // Fetch updated scores after saving
-        const response = await axios.get(`http://localhost:3000/api/leaderboard/Speed`);
+        const response = await axios.get(`https://cognifyiq.onrender.com/Speed`);
         setScores(response.data);
         updateChartData(response.data); // Update chart data after saving
       } catch (error) {

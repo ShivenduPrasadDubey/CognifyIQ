@@ -10,7 +10,7 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/leaderboard/${activeTab}`);
+        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/${activeTab}`);
         setScores(response.data);
         console.log(scores);  
       } catch (error) {

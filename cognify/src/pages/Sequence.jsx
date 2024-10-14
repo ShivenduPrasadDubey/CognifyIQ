@@ -43,7 +43,7 @@ const Visual = () => {
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/leaderboard/VisualMemory`);
+        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/VisualMemory`);
         setScores(response.data);
         updateChartData(response.data);
       } catch (error) {
@@ -96,12 +96,12 @@ const Visual = () => {
     if(user){
 
       try {
-        await axios.post('http://localhost:3000/api/score', {
+        await axios.post('https://cognifyiq.onrender.com/api/score', {
           userName: user.nickname,
           gameType: 'VisualMemory',
           score: finalScore,
         });
-        const response = await axios.get(`http://localhost:3000/api/leaderboard/VisualMemory`);
+        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/VisualMemory`);
         setScores(response.data);
         updateChartData(response.data);
       } catch (error) {

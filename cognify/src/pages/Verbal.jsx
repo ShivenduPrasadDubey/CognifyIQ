@@ -94,7 +94,7 @@ const VerbalMemoryGame = () => {
     if(user) {
 
       try {
-        await axios.post('http://localhost:3000/api/score', {
+        await axios.post('https://cognifyiq.onrender.com//api/score', {
           userName: user.nickname, // Save user's nickname
           gameType: 'VerbalMemory', // Specify game type
           score: finalScore, // Save the final score

@@ -77,7 +77,7 @@ const NumberMemoryGame = () => {
   const saveScore = async (finalScore) => {
     if(user){
       try {
-        await axios.post('http://localhost:3000/api/score', {
+        await axios.post('https://cognifyiq.onrender.com/api/score', {
           userName: user.nickname, // Save user's nickname
           gameType: 'NumberMemory', // Change game type accordingly
           score: finalScore, // Save the final score

@@ -13,7 +13,7 @@ const PastScores = () => {
     if (isAuthenticated && user) {
       const fetchPastScores = async () => {
         try {
-          const response = await axios.get(`http://localhost:3000/api/past-scores/${activeTab}/${user.nickname}`);
+          const response = await axios.get(`https://cognifyiq.onrender.com/api/past-scores/${activeTab}/${user.nickname}`);
           setPastScores(response.data);
         } catch (error) {
           console.error('Error fetching past scores:', error);
