@@ -43,7 +43,7 @@ const Leaderboard = () => {
           <tr>
             <th className="border px-4 py-2 bg-[#f3f4f6] text-[#29ac8c] text-xs">#</th>
             <th className="border px-4 py-2 bg-[#f3f4f6] text-[#29ac8c] text-xs">Name</th>
-            <th className="border px-4 py-2 bg-[#f3f4f6] text-[#29ac8c] text-xs">Score (wpm)</th>
+            <th className="border px-4 py-2 bg-[#f3f4f6] text-[#29ac8c] text-xs">Score</th>
             <th className="border px-4 py-2 bg-[#f3f4f6] text-[#29ac8c] text-xs">Date</th>
           </tr>
         </thead>
@@ -52,7 +52,7 @@ const Leaderboard = () => {
             <tr key={score._id} className="hover:bg-gray-100">
               <td className="border px-4 py-2 text-xs text-[#29ac8c]">{index + 1}</td>
               <td className="border px-4 py-2 text-xs text-[#29ac8c]">{score.userName}</td>
-              <td className="border px-4 py-2 text-xs text-[#29ac8c]">{score.score} wpm</td>
+              <td className="border px-4 py-2 text-xs text-[#29ac8c]">{score.score} </td>
               <td className="border px-4 py-2 text-xs text-[#29ac8c]">{new Date(score.date).toLocaleString()}</td>
             </tr>
           ))}
