@@ -54,7 +54,7 @@ const Visual = () => {
   }, []);
 
   const updateChartData = (data) => {
-    const labels = data.map((score, index) => Score ${index + 1});
+    const labels = data.map((score, index) => `Score ${index + 1}`);
     const scoreValues = data.map(score => score.score);
 
     setChartData({
@@ -151,7 +151,7 @@ const Visual = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: repeat(${gridSize}, 1fr),
+            gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
             gap: '10px',
             margin: '0 auto'
           }}
@@ -169,7 +169,7 @@ const Visual = () => {
                 onClick={() => handleClick(index)}
                 style={{
                   backgroundColor: backgroundColor,
-                  border: 2px solid ${backgroundColor},
+                  border: `2px solid ${backgroundColor}`,
                   transition: 'background-color 0.3s, border-color 0.3s',
                   cursor: 'pointer'
                 }}
