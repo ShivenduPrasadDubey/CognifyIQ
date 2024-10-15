@@ -1,65 +1,49 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuth0 } from "@auth0/auth0-react"; 
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
-const NumberMemoryGame = () => {
+const Visual = () => {
+  const [gridSize] = useState(5);
+  const [gameSequence, setGameSequence] = useState([]); 
+  const [userSequence, setUserSequence] = useState([]);
+  const [flashingBlock, setFlashingBlock] = useState(null);
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(false);
-  const [currentNumber, setCurrentNumber] = useState('');
-  const [inputValue, setInputValue] = useState('');
-  const [timerWidth, setTimerWidth] = useState(100);
-  const [timeLeft, setTimeLeft] = useState(6);
-  
-  const inputRef = useRef(null); // Ref for the input field
-  const { user } = useAuth0(); // Get the current user from Auth0
-
-  // Chart Data State
+  const [clickedBlock, setClickedBlock] = useState(null);
+  const { user } = useAuth0(); 
   const [scores, setScores] = useState([]);
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
 
-  const generateNumber = (level) => Math.floor(Math.random() * (10 ** level - 10 ** (level - 1))) + 10 ** (level - 1);
+  const generateSequence = (level) => {
+    const previousSequence = gameSequence;
+    const newTile = Math.floor(Math.random() * gridSize * gridSize);
+    return [...previousSequence, newTile];
+  };
 
   useEffect(() => {
     if (!hasGameStarted || gameOver) return;
-    const number = generateNumber(level);
-    setCurrentNumber(number.toString());
-    setInputValue('');
-    setTimeLeft(6);
-    setTimerWidth(100);
+    const sequence = generateSequence(level);
+    setGameSequence(sequence);
+    setUserSequence([]);
 
-    const timerInterval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-      setTimerWidth((prev) => prev - (100 / 6));
-    }, 1000);
-
-    const timeout = setTimeout(() => {
-      clearInterval(timerInterval);
-      setTimeLeft(0);
-    }, 6000);
-
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(timerInterval);
-    };
+    sequence.forEach((block, index) => {
+      setTimeout(() => {
+        setFlashingBlock(block);
+        setTimeout(() => setFlashingBlock(null), 500);
+      }, (index + 1) * 1000);
+    });
   }, [level, gameOver, hasGameStarted]);
 
   useEffect(() => {
-    if (timeLeft === 0 && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [timeLeft]);
-
-  // Fetch leaderboard scores for Number Memory Game
-  useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await axios.get(`https://cognifyiq.onrender.com/api/leaderboard/NumberMemory`);
+        const response = await axios.get('https://cognifyiq.onrender.com/api/leaderboard/VisualMemory');
         setScores(response.data);
         updateChartData(response.data);
       } catch (error) {
@@ -70,14 +54,14 @@ const NumberMemoryGame = () => {
   }, []);
 
   const updateChartData = (data) => {
-    const labels = data.map((score, index) => `Score ${index + 1}`);
+    const labels = data.map((score, index) => Score ${index + 1});
     const scoreValues = data.map(score => score.score);
 
     setChartData({
       labels,
       datasets: [
         {
-          label: 'Number Memory Scores',
+          label: 'Visual Memory Scores',
           data: scoreValues,
           borderColor: 'rgba(75, 192, 192, 1)',
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -87,41 +71,39 @@ const NumberMemoryGame = () => {
     });
   };
 
-  const handleSubmit = () => {
-    if (inputValue === currentNumber) {
-      setScore(score + 1);
-      setLevel(level + 1);
-    } else {
-      setGameOver(true);
-      saveScore(score); // Save score when game is over
+  const handleClick = (index) => {
+    if (gameOver || !hasGameStarted) return;
+    setClickedBlock(index);
+    setTimeout(() => setClickedBlock(null), 300);
+    const newUserSequence = [...userSequence, index];
+    setUserSequence(newUserSequence);
+
+    for (let i = 0; i < newUserSequence.length; i++) {
+      if (newUserSequence[i] !== gameSequence[i]) {
+        saveScore(score);
+        setGameOver(true);
+        return;
+      }
     }
-  };
 
-  const resetGame = () => {
-    setLevel(1);
-    setScore(0);
-    setGameOver(false);
-    setHasGameStarted(true); // Automatically start the game after resetting
-    setCurrentNumber('');
-    setInputValue('');
-  };
-
-  const startGame = () => {
-    setHasGameStarted(true);
-    setGameOver(false);
-    setLevel(1);
-    setScore(0);
+    if (newUserSequence.length === gameSequence.length) {
+      setScore((prevScore) => prevScore + 1);
+      setLevel((prevLevel) => prevLevel + 1);
+    }
   };
 
   const saveScore = async (finalScore) => {
     if(user){
+
       try {
         await axios.post('https://cognifyiq.onrender.com/api/score', {
-          userName: user.nickname, // Save user's nickname
-          gameType: 'NumberMemory', // Save game type
-          score: finalScore, // Save the final score
+          userName: user.nickname,
+          gameType: 'VisualMemory',
+          score: finalScore,
         });
-        console.log('Score saved successfully');
+        const response = await axios.get('https://cognifyiq.onrender.com/api/leaderboard/VisualMemory');
+        setScores(response.data);
+        updateChartData(response.data);
       } catch (error) {
         console.error('Error saving score:', error);
       }
@@ -131,61 +113,79 @@ const NumberMemoryGame = () => {
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') handleSubmit();
+  const resetGame = () => {
+    saveScore(score);
+    setLevel(1);
+    setScore(0);
+    setGameOver(false);
+    setGameSequence([]);
+    setUserSequence([]);
+    setFlashingBlock(null);
+    setClickedBlock(null);
+    setHasGameStarted(false);
+    startGame();
+  };
+
+  const startGame = () => {
+    setHasGameStarted(true);
+    setGameOver(false);
+    setLevel(1);
+    setScore(0);
   };
 
   return (
-      <div className='flex flex-col justify-center items-center rounded-md gap-4 mt-20 md:mt-36'>
-        <h2 className='md:text-3xl text-lg text-[#f0a45d]'>Number Memory Game</h2>
-        <h2 className='text-[#f0a45d]'>Score: {score}</h2>
+    <div className='justify-center items-center rounded-md flex flex-col mx-auto gap-4 mt-20 md:mt-36'>
+      <h2 className='md:text-3xl text-lg text-[#f0a45d]'>Visual Memory Game</h2>
+      <h2 className='text-[#f0a45d] text-md'>Score: {score}</h2>
 
-        {!hasGameStarted ? (
-          <button className='bg-customOrange text-[#f0a45d]' onClick={startGame}>
-            Start Game
-          </button>
-        ) : gameOver ? (
-          <div className='flex flex-col justify-center items-center'>
-            <h3 className='mb-4'>Game Over! Final Score: {score}</h3>
-            <button className='bg-customOrange text-[#f0a45d]' onClick={resetGame}>
-              Restart
-            </button>
-          </div>
-        ) : (
-          <div className='mt-10'>
-            <h3 className='text-lg md:text-2xl text-[#f0a45d] mb-6'>{timeLeft > 0 ? currentNumber : 'What was the number?'}</h3>
-            {timeLeft === 0 && (
-              <div className='flex flex-col gap-4 top-4'>
-                <input
-                  type='text'
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  ref={inputRef} // Set the ref to the input field
-                  className='border-b-2 border-customOrange bg-transparent text-[#f0a45d] mb-4 focus:outline-none'
-                  placeholder='Enter the number'
-                />
-                <button className='bg-customOrange text-[#f0a45d]' onClick={handleSubmit}>
-                  Submit
-                </button>
-              </div>
-            )}
-            {timeLeft > 0 && (
-              <div
-                className='mt-4 bg-[#f0a45d]'
-                style={{ width: `${timerWidth}%`, height: '10px', transition: 'width 1s linear' }}
-              ></div>
-            )}
-          </div>
-        )}
-
-        {/* Chart Section */}
-        <div className="space-y-10 h-52 w-8/12 flex justify-center mx-auto flex-col mt-10">
-          <h3 className="text-center text-sm md:text-lg font-semibold text-[#f0a45d]">Number Memory Score Statistics</h3>
-          <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+      {!hasGameStarted ? (
+        <button className='bg-customOrange text-[#f0a45d]' onClick={startGame}>
+          Click here to start
+        </button>
+      ) : gameOver ? (
+        <div className='justify-center items-center rounded-md flex flex-col mx-auto gap-4'>
+          <h3 className=''>Game Over! Final Score: {score}</h3>
+          <button className='bg-customOrange text-[#f0a45d]' onClick={resetGame}>Restart</button>
         </div>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: repeat(${gridSize}, 1fr),
+            gap: '10px',
+            margin: '0 auto'
+          }}
+          className='mt-20'
+        >
+          {Array.from({ length: gridSize * gridSize }, (_, index) => {
+            const backgroundColor =
+              flashingBlock === index || clickedBlock === index
+                ? '#f0ffff'
+                : '#f0a45d';
+
+            return (
+              <div
+                key={index}
+                onClick={() => handleClick(index)}
+                style={{
+                  backgroundColor: backgroundColor,
+                  border: 2px solid ${backgroundColor},
+                  transition: 'background-color 0.3s, border-color 0.3s',
+                  cursor: 'pointer'
+                }}
+                className='h-10 w-10'
+              />
+            );
+          })}
+        </div>
+      )}
+
+      <div className="space-y-10 h-52 w-8/12 flex justify-center mx-auto flex-col mt-10">
+        <h3 className="text-center text-sm md:text-lg font-semibold text-[#f0a45d]">Visual Memory Score Statistics</h3>
+        <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
       </div>
+    </div>
   );
 };
 
-export default NumberMemoryGame;
+export default Visual;
